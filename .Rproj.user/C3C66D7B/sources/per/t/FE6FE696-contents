@@ -1,0 +1,102 @@
+---
+title: "ggplot and tidy"
+author: "Merlin Udinov"
+date: "2025-02-10"
+output: 
+  html_document: 
+    theme: cosmo
+---
+
+```{r}
+#| label: load-libs
+
+library(tidyverse)
+```
+
+```{r}
+#| label: explore
+
+glimpse(mtcars)
+head(mtcars)
+dim(mtcars)
+summary(mtcars)
+```
+
+## **pipe operater**
+```{r}
+#| label: some plots
+
+# This is our template, the pipe operate |> sends whatever is on the left of the pipe (mtcars) to the right of the pipe (ggplot())
+# call dataframe and 'pipe' into ggplot function
+mtcars |>
+    ggplot()    # first layer, we need a ggplot
+
+# call dataframe and 'pipe' into ggplot function
+# add aesthetic mapping to x and y axis
+mtcars |>
+    ggplot() +
+    aes(x = disp, y = mpg)    # second layer, we have axises and their labels, which is disp and mpg
+
+# call dataframe and 'pipe' into ggplot function
+# add aesthetic mapping to x and y axis
+# add geometric object geom_point
+mtcars |>
+    ggplot() +
+    aes(x = disp, y = mpg) +
+    geom_point()
+
+mtcars |>
+  ggplot() +
+  aes(x = factor(am), y = mpg) +
+  stat_summary(
+    fun.data = mean_sdl,
+    geom = 'pointrange'
+  )
+
+mtcars |>
+    ggplot() +
+    aes(x = factor(am), y = mpg) +
+    geom_boxplot()
+```
+
+```{r}
+#| label: simple-transformations
+
+# select columns with 'select()'
+mtcars |>
+  select(mpg, disp, am)
+
+# renaming disp as merlin
+mtcars |>
+  select(mpg, merlin = disp, am)
+
+# filter rows with 'filter()' [send mt cars to select and select those three columns then send those three columns to filter]
+mtcars |>
+  select(mpg, merlin = disp, am) |>
+  filter(am == 1, mpg >= 23)
+
+# use mutate to add one new column
+mtcars |>
+  select(mpg, merlin = disp, am) |>
+  filter(am == 1, mpg >= 23) |>
+  mutate(mpgplus100 = mpg + 100)
+# use mutate to add two new columns
+mtcars |>
+  select(mpg, merlin = disp, am) |>
+  filter(am == 1, mpg >= 23) |>
+  mutate(mpgplus100 = mpg + 100,
+         z_mpg = (mpg - mean(mpg)) / sd(mpg))
+
+# summarise
+mtcars |>
+  summarise(avg = mean(mpg))
+
+# summarise after group_by
+# summarise
+mtcars |>
+  group_by(am) |>
+  summarise(
+    avg = mean(mpg),
+    sd = sd(mpg))
+```
+

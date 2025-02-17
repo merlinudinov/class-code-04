@@ -1,0 +1,262 @@
+---
+title: "ggplot and tidy"
+author: "Merlin Udinov"
+date: "2025-02-17"
+output: 
+  html_document: 
+    theme: cosmo
+---
+
+```{r}
+#| label: load-libs
+
+library(tidyverse)
+```
+
+```{r}
+#| label: explore
+
+glimpse(mtcars)
+head(mtcars)
+dim(mtcars)
+summary(mtcars)
+```
+
+## **pipe operater**
+```{r}
+#| label: some plots
+
+# This is our template, the pipe operate |> sends whatever is on the left of the pipe (mtcars) to the right of the pipe (ggplot())
+# call dataframe and 'pipe' into ggplot function
+mtcars |>
+    ggplot()    # first layer, we need a ggplot
+
+# call dataframe and 'pipe' into ggplot function
+# add aesthetic mapping to x and y axis
+mtcars |>
+    ggplot() +
+    aes(x = disp, y = mpg)    # second layer, we have axises and their labels, which is disp and mpg
+
+# call dataframe and 'pipe' into ggplot function
+# add aesthetic mapping to x and y axis
+# add geometric object geom_point
+mtcars |>
+    ggplot() +
+    aes(x = disp, y = mpg) +
+    geom_point()
+
+mtcars |>
+  ggplot() +
+  aes(x = factor(am), y = mpg) +
+  stat_summary(
+    fun.data = mean_sdl,
+    geom = 'pointrange'
+  )
+
+mtcars |>
+    ggplot() +
+    aes(x = factor(am), y = mpg) +
+    geom_boxplot()
+```
+
+```{r}
+#| label: simple-transformations
+
+# select columns with 'select()'
+mtcars |>
+  select(mpg, disp, am)
+
+# renaming disp as merlin
+mtcars |>
+  select(mpg, merlin = disp, am)
+
+# filter rows with 'filter()' [send mt cars to select and select those three columns then send those three columns to filter]
+mtcars |>
+  select(mpg, merlin = disp, am) |>
+  filter(am == 1, mpg >= 23)
+
+# use mutate to add one new column
+mtcars |>
+  select(mpg, merlin = disp, am) |>
+  filter(am == 1, mpg >= 23) |>
+  mutate(mpgplus100 = mpg + 100)
+# use mutate to add two new columns
+mtcars |>
+  select(mpg, merlin = disp, am) |>
+  filter(am == 1, mpg >= 23) |>
+  mutate(mpgplus100 = mpg + 100,
+         z_mpg = (mpg - mean(mpg)) / sd(mpg))
+
+# summarise
+mtcars |>
+  summarise(avg = mean(mpg))
+
+# summarise after group_by
+# summarise
+mtcars |>
+  group_by(am) |>
+  summarise(
+    avg = mean(mpg),
+    sd = sd(mpg))
+```
+
+### 2025.02.17
+```{r}
+#| warning: FALSE
+#| message: FALSE
+  
+library(tidyverse)
+library(ds4ling)
+
+glimpse(test_scores_rm)
+
+test_scores_rm$test1
+
+cor(test_scores_rm$test1, test_scores_rm$test2)
+
+test_scores_rm |>
+  ggplot() + 
+  aes (x = test1, y = test2) +
+  geom_point()
+# equals to
+ggplot() + 
+  aes (x = test_scores_rm$test1, y = test_scores_rm$test2) +
+  geom_point()
+
+cor.test(test_scores_rm$test1, test_scores_rm$test2)
+```
+#### This part is about select()
+```{r}
+## select any 3 variables
+mtcars |>
+  select(mpg, displacement = disp, am)
+
+## select columns between mpg to drat (including)
+mtcars |>
+  select(mpg:drat)
+
+## use select to rename mpg to hello_world
+mtcars |>
+  select(hello_world = mpg)
+
+## select the last three variables
+## cannot use num_range() parameter, your varialbles need to be numbered to use this, like wk01, wk02, wk03
+mtcars |>
+  select(am:carb)
+```
+#### This part is about filter()
+```{r}
+# %in%
+
+# filter rows in which mpg is leass than 20 and greater than 14
+mtcars |>
+  filter(mpg > 14 & mpg < 20)
+
+# in filter() comma ',' is kind of like &
+filter (mtcars, mpg > 14, mpg < 20)
+
+# filter rows in which cyl is equal to 6
+mtcars |>
+  filter(cyl == 6)
+
+# filter rows in which mpg is greater than 20 or disp is less than 200
+mtcars |>
+  filter(mpg > 20 | disp < 200)
+
+# just because you do not get an error from R, does not make sure that you are right
+mtcars |>
+  filter(mpg > 14 & mpg < 20) |>
+  filter(cyl == 6) |>
+  filter(mpg > 20 | disp < 200)
+```
+#### This part is about arrange()
+```{r}
+# arrange the mtcars dataset based on cyl and disp
+arrange(mtcars, cyl, disp)
+
+# arrange the mtcars dataset based on mpg from highest to lowest
+arrange(mtcars, desc(mpg))
+
+# fresh fat is not congealed
+```
+#### This part is about mutate()
+```{r}
+# add a new column named new_col with all values being "hi"
+mutate(mtcars, new_col = "hi")
+
+# in the mtcars dataset, select the mpg column and then create a new column called mpg_x2 that doubles every value in the dataframe
+mtcars |>
+  select(mpg) |>
+  mutate(mpg_x2 = mpg * 2) |>
+  select(mpg_x2)
+
+# in the mtcars dataset, select the mpg column and create a new column called mpg_c that centres the mpg data by subtracting the mean value of mpg from every value in the data frame
+mtcars |>
+  select(mpg) |>
+  mutate(mpg_c = mpg- mean(mpg)) |>
+  select(mpg_c) |>
+  summarize(avg = mean(mpg_c))
+
+# in the mtcars dataset, select the mpg column and create a new column called value that applies the label 'good' to cars that get over 18 mpg and the lable 'bad' to cars that get 18 mpg or less
+mtcars |>
+  select(mpg) |>
+  mutate(value = if_else(
+    mpg <= 18,
+    "bad",
+    "good"
+    )
+  )
+mtcars |>
+  select(mpg) |>
+  mutate(value = if_else(
+    condition = mpg <= 18,
+    true = "bad",
+    false = "good"
+    )
+  )
+```
+#### This part is about advanced mutate(), replacing if_else() with case_when(), when you need more than 1 conditions [or you can also do nested if_else()s, which is more complicated]
+```{r}
+# create a new column called "opinion". If mpg is greater than 20, then it is "good", if mpg is less than 20, but greater than 15, then "meh", if mpg less than 15, then "bad", [in R "" basically equals '']
+mtcars |>
+  select(mpg) |>
+  mutate(
+    opinion = case_when(
+      mpg >= 20 ~ 'good',
+      mpg >= 15 & mpg < 20 ~ 'meh',
+      mpg < 15 ~ 'bad'
+    )
+  ) |>
+ggplot() +
+  aes(x = opinion, y = mpg) + 
+  geom_boxplot()
+```
+#### This part is about summarize(), which will always reduce the number of rows in your dataframe, often used together with group_by
+```{r}
+# from last week
+mtcars |>
+  group_by(am) |>
+  summarise(
+    avg = mean(mpg),
+    sd = sd(mpg)
+  )
+# calculate the mean value of mpg in the dataset mtcars
+mtcars |>
+  summarise(avg = mean(mpg))
+
+# calculate the mean value of mpg as a function of cyl
+mtcars |>
+  group_by(cyl) |>
+  summarise(avg = mean(mpg))
+
+# calculate the mean value, standard deviation, min value and max value of mpg as a function of cyl
+## usually we dont name a variable the same as a function's name, like min() and mn
+mtcars |>
+  group_by(cyl) |>
+  summarise(
+    avg = mean(mpg),
+    std = sd(mpg),
+    mn = min(mpg),
+    mx = max(mpg)
+  )
+```
